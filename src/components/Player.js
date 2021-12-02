@@ -14,6 +14,8 @@ const Hand = props => {
     const [hasPlayedSetOrRun, setHasPlayedSetOrRun] = useState(false)
     const [playerId] = useState(props.playerId)
     const [boardId] = useState(props.boardId)
+    const [points, setPoints] = useState()
+    const [handPoints, setHandPoints] = useState()
     const [isPlayerTurn, setIsPlayerTurn] = useState()
     const [isAllContainersValid, setIsAllContainersValid] = useState(props.isAllContainersValid)
     const [isSnackOpen, setIsSnackOpen] = useState(false)
@@ -92,6 +94,21 @@ const Hand = props => {
         delete e.payload.playerId
         setItems(applyDrag(items, e))
     }
+
+    const getPointsInHand = () => {
+        let temp = 0
+
+        items.forEach(el => {
+            temp += el.value
+        })
+
+        return temp
+    }
+
+    const style = {
+        minHeight: '150px',
+        width: '150px',
+    }
     
     const divStyle ={
         backgroundColor: isPlayerTurn ? '#2ecc71' : '',
@@ -101,6 +118,10 @@ const Hand = props => {
         marginLeft: '-25px',
         marginRight: '25px',
     }
+
+    useEffect(() => {
+        setHandPoints(getPointsInHand())
+    }, [items])
 
     useEffect(() => {
         setIsAllContainersValid(props.isAllContainersValid)
@@ -114,6 +135,7 @@ const Hand = props => {
         const unsub = onSnapshot(doc(database, "player", props.playerId),
             doc => {
                 setItems(doc.data().hand)
+                setPoints(doc.data().points)
                 setHasDrawn(doc.data().hasDrawn)
                 setHasDiscarded(doc.data().hasDiscarded)
                 setHasPlayedSetOrRun(doc.data().hasPlayedSetOrRun)
@@ -131,13 +153,14 @@ const Hand = props => {
             <Button variant="contained" color="error" onClick={handleDrawFromDeck}>Draw from deck</Button>
             <Button variant="contained" color="error" onClick={handleDrawFromDiscard}>Draw from Discard</Button>
             <Button variant="contained" color="error" onClick={handleEndTurnPress}>end turn</Button>
-            {isPlayerTurn && <Button variant="contained" onClick={handleEndTurnPress} disabled={!(hasDrawn && (hasDiscarded || (items.length === 0 && isAllContainersValid)))} >End turn</Button>}
+            {isPlayerTurn && !hasDrawn && <Button variant="contained" onClick={() => setIsDialogOpen(true)} >Draw card</Button>}
+            {isPlayerTurn && <Button variant="contained" onClick={handleEndTurnPress} disabled={!(hasDrawn && (hasDiscarded || (items.length === 0 && isAllContainersValid)) && handPoints < (100 - points))} >End turn</Button>}
             <div style={divStyle}>
-                <Container name="hand" acceptDrop={{isPlayerTurn, hasDiscarded, hasPlayedSetOrRun}} groupName="1" orientation="horizontal" getChildPayload={i => handlePayload(i)} onDrop={handleOnDrop}>
+                <Container style={style} dropPlaceholder={{showOnTop: true}} acceptDrop={{isPlayerTurn, hasDiscarded, hasDrawn, hasPlayedSetOrRun}} groupName="1" orientation="horizontal" getChildPayload={i => handlePayload(i)} onDrop={handleOnDrop}>
                     {items && items.map(item => <DraggableCard key={item.id} id={item.id} item={item} />)}
                 </Container>
             </div>
-            {playerId && boardId && <DrawCardDialog isDialogOpen={isDialogOpen && isPlayerTurn} playerId={playerId} boardId={boardId} items={items}/>}
+            {playerId && boardId && <DrawCardDialog isDialogOpen={isDialogOpen && isPlayerTurn} closeDialog={() => setIsDialogOpen(false)} playerId={playerId} boardId={boardId} items={items}/>}
             <Snackbar anchorOrigin={{vertical: 'top', horizontal: 'center'}} open={isSnackOpen} autoHideDuration={2000} onClose={() => setIsSnackOpen(false)} message="All containers must be green" />
         </div>
     )

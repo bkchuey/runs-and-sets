@@ -57,15 +57,12 @@ const Board = props => {
         setIsDiscardReady(await initializeDiscard(props.boardId)) 
         setIsCardContainerReady(await initializeCardContainer(props.boardId))
         setIsCardsInPlayContainerReady(await initializeCardsInPlayContainer(props.boardId))
+        handleDealStartingHands()
     }
 
     useEffect(() => {
         newBoard()
     }, [])
-
-    useEffect(() => {
-        handleDealStartingHands()
-    }, [isCardsInPlayContainerReady])
 
     useEffect(() => {
         const unsub = onSnapshot(doc(database, "board", props.boardId),
@@ -83,9 +80,9 @@ const Board = props => {
 
     return (
         <div>
-            <MuiContainer style={{marginTop: '50px'}}>
+            <MuiContainer style={{marginTop: '20px'}}>
                 {isCardsInPlayContainerReady && isCardContainerReady && <CardsInPlayContainerGrid boardId={boardId} isContainer0Valid={isContainer0Valid} />}
-                {isCardContainerReady && <CardContainerGrid boardId={boardId} areAllContainersValid={handleAreAllContainersValid} isContainer0Valid={handleIsContainer0Valid} />}
+                {isCardContainerReady && <CardContainerGrid boardId={boardId} currentPlayer={currentPlayer} playerId={playerId} areAllContainersValid={handleAreAllContainersValid} isContainer0Valid={handleIsContainer0Valid} />}
             </MuiContainer>
             <div style={{position: 'fixed', right: 10, bottom: 0}}>
                 <Grid container direction="column">

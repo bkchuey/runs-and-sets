@@ -79,7 +79,7 @@ const CardsInPlayContainer = props => {
     }
 
     const handleShouldAcceptDrop = e => {
-        return e.acceptDrop.isPlayerTurn && (e.acceptDrop.hasPlayedSetOrRun || props.isContainer0Valid)
+        return e.acceptDrop.isPlayerTurn && e.acceptDrop.hasDrawn && (e.acceptDrop.hasPlayedSetOrRun || props.isContainer0Valid)
     }
 
     useEffect(() => {
@@ -105,7 +105,7 @@ const CardsInPlayContainer = props => {
 
     return (
         <div style={divStyle}>
-            <Container groupName="1" getChildPayload={i => items[i]} 
+            <Container getChildPayload={i => items[i]} 
                 onDrop={handleOnDrop} 
                 dropPlaceholder={{showOnTop: true}}
                 style={containerStyle}

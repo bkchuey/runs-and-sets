@@ -65,7 +65,7 @@ const CardContainer = props => {
     }
     
     const handleShouldAcceptDrop = e => {
-        return e.acceptDrop.isPlayerTurn
+        return e.acceptDrop.isPlayerTurn && e.acceptDrop.hasDrawn
     }
 
     const divStyle = {
@@ -86,7 +86,7 @@ const CardContainer = props => {
 
     return (
         <div style={divStyle}>
-            <Container name="container" acceptDrop={{isPlayerTurn:true}} groupName="1" getChildPayload={i => items[i]} orientation="horizontal" 
+            <Container name="container" acceptDrop={{isPlayerTurn:true, hasDrawn: true}} groupName="1" getChildPayload={i => items[i]} orientation="horizontal" 
                 onDrop={e => handleOnDrop(e)} dropPlaceholder={{showOnTop: true}}
                 style={{width: '150px', height: '200px'}}
                 shouldAcceptDrop={handleShouldAcceptDrop}
