@@ -19,6 +19,7 @@ const NewTurnDialog = props => {
 
     const handleClose = () => {
         setOpen(false)
+        props.closeDialog(true)
     }
 
     useEffect(() => {
@@ -26,7 +27,7 @@ const NewTurnDialog = props => {
     }, [props.isDialogOpen])
 
     return (
-        <Dialog open={open} >
+        <Dialog open={open} onClose={handleClose}>
             <DialogTitle align="center">Draw a Card</DialogTitle>
             <DialogContent>
                 <Grid container>

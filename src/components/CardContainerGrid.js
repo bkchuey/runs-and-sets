@@ -72,8 +72,6 @@ const CardContainerGrid = props => {
     }, [props.cardContainerId])
 
     useEffect(() => {
-        // console.log(allContainersValidity)
-        // console.log(allContainersValidity.every(Boolean))
         props.areAllContainersValid(allContainersValidity.every(Boolean))
 
         if (allContainersValidity[0] && cardsInEachContainer[0].length > 2) {
@@ -93,8 +91,8 @@ const CardContainerGrid = props => {
                 <Grid item xs={12} key={index}>
                     <CardContainer index={index} items={cardsInEachContainer[index]} boardId={boardId} cardContainerId={boardId} isValid={e => handleIsContainerValid(e, index)} />
                 </Grid>)}
-            <Button variant="contained" onClick={handleAddContainerPress} disabled={containers.length > 2 || isAddButtonDisabled}>Add container</Button>
-            <Button variant="contained" onClick={handleRemoveContainerPress} disabled={containers.length < 1 || isRemoveButtonDisabled}>Remove container</Button>
+            <Button variant="contained" onClick={handleAddContainerPress} disabled={containers.length > 2 || isAddButtonDisabled || props.currentPlayer !== props.playerId}>Add container</Button>
+            <Button variant="contained" onClick={handleRemoveContainerPress} disabled={containers.length < 1 || isRemoveButtonDisabled || props.currentPlayer !== props.playerId}>Remove container</Button>
         </Grid>
     )
 }

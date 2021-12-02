@@ -117,7 +117,6 @@ export const initializePlayer = async (uid) => {
 }
 
 export const resetBoardState = async (boardId) => {
-    console.log(boardId)
     const boardSnap = await getDoc(doc(database, "board", boardId))
     const currentPlayer = boardSnap.data().players[(boardSnap.data().roundNumber + 1) % boardSnap.data().players.length]
 

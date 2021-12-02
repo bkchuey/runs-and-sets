@@ -49,7 +49,7 @@ const Discard = props => {
     // }
 
     const handleShouldAcceptDrop = e => {
-        return e.acceptDrop.isPlayerTurn && !e.acceptDrop.hasDiscarded
+        return e.acceptDrop.isPlayerTurn && !e.acceptDrop.hasDiscarded && e.acceptDrop.hasDrawn
     }
 
     const style ={
@@ -76,7 +76,7 @@ const Discard = props => {
 
     return (
         <div style={style}>
-            <Container dropPlaceholder={{showOnTop: true}} groupName="1"
+            <Container dropPlaceholder={{showOnTop: true}} 
                 // getChildPayload={i => handlePayload(i)}
                 onDrop={e => handleOnDrop(e)}
                 // style={style}
