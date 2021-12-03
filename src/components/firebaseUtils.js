@@ -1,8 +1,9 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore"
 // import { getAnalytics } from "firebase/analytics";
-import { collection, query, doc, getDoc, getDocs, setDoc, deleteDoc, updateDoc, arrayUnion, arrayRemove, writeBatch, runTransaction, increment } from "firebase/firestore";
-import { createDeck } from "./utils";
+import { collection, query, doc, getDoc, getDocs, setDoc, updateDoc, arrayUnion, arrayRemove, writeBatch, runTransaction, increment } from "firebase/firestore";
+import { createDeck, shuffleDeck } from "./utils";
+import { uniqueNamesGenerator, adjectives, colors, animals } from 'unique-names-generator';
 
 const firebaseConfig = {
     apiKey: "AIzaSyCQ-Vcz8YYWSePuFMpD1QOc7CoBaZs-Flg",
@@ -18,14 +19,41 @@ const app = initializeApp(firebaseConfig);
 export const database = getFirestore(app)
 // const analytics = getAnalytics(app);
 
+const playerNameConfig = {
+    dictionaries: [adjectives, colors, animals],
+    style: 'capital',
+    separator: ' '
+}
+const roomCodeConfig = {
+    dictionaries: [adjectives, colors, animals],
+    separator: '-'
+}
+
+let boardId, boardRef, deckRef, discardRef, cardContainerRef, cardsInPlayContainerRef
 
 //-----------------
 // Initialize components in database
 //-----------------
 
-export const initializeBoard = async (boardId, [players]) => {
-    // console.log([players])
-    const boardRef = doc(database, "board", boardId)
+const initializeDocRefs = (board) => {
+    boardId = board
+    boardRef = doc(database, "board", board)
+    deckRef = doc(database, "deck", board)
+    discardRef = doc(database, "discard", board)
+    cardContainerRef = doc(database, "cardContainer", board)
+    cardsInPlayContainerRef = doc(database, "cardsInPlayContainer", board)
+}
+
+export const initializeNewBoard = async (boardId, [players]) => {
+    await initializeBoard(boardId, [players])
+    await initializeCardContainer()
+    await initializeCardsInPlayContainer()
+    await initializeDeck()
+    await initializeDiscard()
+}
+
+const initializeBoard = async (boardId, [players]) => {
+    initializeDocRefs(boardId)
     const docSnap = await getDoc(boardRef)
 
     if (!docSnap.exists()) {
@@ -41,8 +69,7 @@ export const initializeBoard = async (boardId, [players]) => {
     assignPlayerToGameRoom(boardId)
 }
 
-export const initializeDeck = async (boardId) => {
-    const deckRef = doc(database, "deck", boardId)
+const initializeDeck = async () => {
     const docSnap = await getDoc(deckRef)
 
     if (!docSnap.exists()) {
@@ -54,8 +81,7 @@ export const initializeDeck = async (boardId) => {
     return true
 }
 
-export const initializeDiscard = async (boardId) => {
-    const discardRef = doc(database, "discard", boardId)
+const initializeDiscard = async () => {
     const docSnap = await getDoc(discardRef)
 
     if (!docSnap.exists()) {
@@ -67,8 +93,7 @@ export const initializeDiscard = async (boardId) => {
     return true
 }
 
-export const initializeCardContainer = async (boardId) => {
-    const cardContainerRef = doc(database, "cardContainer", boardId)
+const initializeCardContainer = async () => {
     const docSnap = await getDoc(cardContainerRef)
 
     if (!docSnap.exists()) {
@@ -83,8 +108,7 @@ export const initializeCardContainer = async (boardId) => {
     return true
 }
 
-export const initializeCardsInPlayContainer = async (boardId) => {
-    const cardsInPlayContainerRef = doc(database, "cardsInPlayContainer", boardId)
+const initializeCardsInPlayContainer = async () => {
     const docSnap = await getDoc(cardsInPlayContainerRef)
 
     if (!docSnap.exists()) {
@@ -105,10 +129,8 @@ export const initializePlayer = async (uid) => {
             hasDiscarded: false,
             hasDrawn: false,
             hasPlayedSetOrRun: false,
-            isPlayerTurn: false,
-            hasDrawnStartingHand: false,
             points: 0,
-            name: 'Anonymous',
+            name: uniqueNamesGenerator(playerNameConfig),
             boardId: null,
         })
         return null
@@ -116,30 +138,30 @@ export const initializePlayer = async (uid) => {
     return docSnap.data().boardId
 }
 
-export const resetBoardState = async (boardId) => {
-    const boardSnap = await getDoc(doc(database, "board", boardId))
+export const resetBoardState = async () => {
+    const boardSnap = await getDoc(boardRef)
     const currentPlayer = boardSnap.data().players[(boardSnap.data().roundNumber + 1) % boardSnap.data().players.length]
 
     const players = boardSnap.data().players
-    // console.log(players)
+
     const batch = writeBatch(database)
 
-    batch.update(doc(database, "cardContainer", boardId), {
+    batch.update(cardContainerRef, {
         0: [],
         1: [],
         2: [],
         containers: [],
     })
-    batch.set(doc(database, "cardsInPlayContainer", boardId), {
+    batch.set(cardsInPlayContainerRef, {
         boardId: boardId,
     })
-    batch.update(doc(database, "deck", boardId), {
+    batch.update(deckRef, {
         deck: createDeck(),
     })
-    batch.update(doc(database, "discard", boardId), {
+    batch.update(discardRef, {
         discard: [],
     })
-    batch.update(doc(database, "board", boardId), {
+    batch.update(boardRef, {
         hasDealtStartingHands: false,
         roundNumber: increment(1),
         turnNumber: 0,
@@ -158,13 +180,10 @@ export const resetBoardState = async (boardId) => {
     })
 
     await batch.commit()
-    await dealStartingHands([players], boardId)
+    await dealStartingHands([players])
 }
 
-export const dealStartingHands = async ([players], boardId) => {
-    const deckRef = doc(database, "deck", boardId)
-    const boardRef = doc(database, "board", boardId)
-
+export const dealStartingHands = async ([players]) => {
     await runTransaction(database, async(transaction) => {
         const boardSnap = await transaction.get(boardRef)
 
@@ -182,7 +201,7 @@ export const dealStartingHands = async ([players], boardId) => {
                 end += 10
             })
 
-            transaction.update(doc(database, "discard", boardId), {
+            transaction.update(discardRef, {
                 discard: [cardsInDeck[start]],
             })
 
@@ -202,7 +221,7 @@ export const dealStartingHands = async ([players], boardId) => {
 //-----------------
 
 export const createRoom = async () => {
-    let roomCode = require('human-readable-ids').hri.random()
+    let roomCode = uniqueNamesGenerator(roomCodeConfig)
     
     await setDoc(doc(database, "room", roomCode), {
         isGameStarted: false,
@@ -285,7 +304,6 @@ export const initializeGame = async (roomCode, [players]) => {
 }
 
 const assignPlayerToGameRoom = async (boardId) => {
-    const boardRef = doc(database, "board", boardId)
     const boardSnap = await getDoc(boardRef)
 
     const batch = writeBatch(database)
@@ -293,15 +311,12 @@ const assignPlayerToGameRoom = async (boardId) => {
     boardSnap.data().players.forEach(el => {
         batch.update(doc(database, "player", el), {
             boardId: boardId,
-            // points: 0,
         })
     })
-
     batch.commit()
 }
 
-const unassignPlayerToGameRoom = async (boardId) => {
-    const boardRef = doc(database, "board", boardId)
+const unassignPlayerToGameRoom = async () => {
     const boardSnap = await getDoc(boardRef)
 
     const batch = writeBatch(database)
@@ -310,42 +325,56 @@ const unassignPlayerToGameRoom = async (boardId) => {
         batch.update(doc(database, "player", el), {
             boardId: null,
             points: 0,
+            hasDrawn: false,
+            hasDiscarded: false,
+            hasPlayedSetOrRun: false,
         })
     })
-
     batch.commit()
 }
 
-export const deleteGame = async (boardId) => {
-    unassignPlayerToGameRoom(boardId)
-    await deleteDoc(doc(database, "deck", boardId))
-    await deleteDoc(doc(database, "discard", boardId))
-    await deleteDoc(doc(database, "cardContainer", boardId))
-    await deleteDoc(doc(database, "cardsInPlayContainer", boardId))
-    await deleteDoc(doc(database, "board", boardId))
-    await deleteDoc(doc(database, "game", boardId))
-    await deleteDoc(doc(database, "room", boardId))
+export const deleteGame = async () => {
+    unassignPlayerToGameRoom()
 
-}
+    const batch = writeBatch(database)
 
-export const initializeNewBoard = async (boardId, [players]) => {
-    await initializeBoard(boardId, [players])
-    await initializeCardContainer(boardId)
-    await initializeCardsInPlayContainer(boardId)
-    await initializeDeck(boardId)
-    await initializeDiscard(boardId)
+    batch.delete(deckRef)
+    batch.delete(discardRef)
+    batch.delete(cardContainerRef)
+    batch.delete(cardsInPlayContainerRef)
+    batch.delete(boardRef)
+    batch.delete(doc(database, "game", boardId))
+    batch.delete(doc(database, "room", boardId))
+
+    batch.commit()
 }
 
 //-----------------
 // In-game actions
 //-----------------
 
-export const drawFromDeck = async (boardId, playerId, items) => {
-    const deckRef = doc(database, "deck", boardId)
-
+export const drawFromDeck = async (playerId, items) => {
     await runTransaction(database, async (transaction) => {
         const deckSnap = await transaction.get(deckRef)
-        const cardToDraw = deckSnap.data().deck[0]
+        let cardToDraw
+
+        if (deckSnap.data().deck.length === 0) {
+            const discardSnap = await transaction.get(discardRef)
+
+            let deck = discardSnap.data().discard.slice(0, discardSnap.data().discard.length - 1)
+            let discard = discardSnap.data().discard[discardSnap.data().discard.length - 1]
+
+            transaction.update(deckRef, {
+                deck: shuffleDeck(deck),
+            })
+            transaction.update(discardRef, {
+                discard: [discard]
+            })
+
+            cardToDraw = deck[0]
+        } else {
+            cardToDraw = deckSnap.data().deck[0]
+        }
 
         transaction.update(doc(database, "player", playerId), {
             hand: [...items, cardToDraw],
@@ -357,9 +386,7 @@ export const drawFromDeck = async (boardId, playerId, items) => {
     })
 }
 
-export const drawFromDiscard = async (boardId, playerId, items) => {
-    const discardRef = doc(database, "discard", boardId)
-
+export const drawFromDiscard = async (playerId, items) => {
     await runTransaction(database, async (transaction) => {
         const discardSnap = await transaction.get(discardRef)
         const cardToDraw = discardSnap.data().discard[discardSnap.data().discard.length-1]
@@ -374,21 +401,20 @@ export const drawFromDiscard = async (boardId, playerId, items) => {
     })
 }
 
-export const endTurn = async (boardId, playerId, items) => {
+export const endTurn = async (playerId, items) => {
     const playerRef = doc(database, "player", playerId)
 
     await updateDoc(playerRef, {
         hand: items,
     })
 
-    moveCardsToInPlayContainer(boardId, playerId, items.length)
+    moveCardsToInPlayContainer(playerId, items.length)
 }
 
-const moveCardsToInPlayContainer = async (boardId, playerId, handSize) => {
-    const docSnap = await getDoc(doc(database, "cardContainer", boardId))
+const moveCardsToInPlayContainer = async (playerId, handSize) => {
+    const docSnap = await getDoc(cardContainerRef)
     let temp = {}
 
-    const cardsInPlayContainerRef = doc(database, "cardsInPlayContainer", boardId)
     const cardsInPlayContainerSnap = await getDoc(cardsInPlayContainerRef)
     let count = Object.keys(cardsInPlayContainerSnap.data()).length - 1
 
@@ -399,15 +425,15 @@ const moveCardsToInPlayContainer = async (boardId, playerId, handSize) => {
         }
     }
     await updateDoc(cardsInPlayContainerRef, temp)
-    await clearContainers(boardId)
+    await clearContainers()
     if (handSize === 0) {
-        await boardOver(boardId)
+        await boardOver()
     }
-    else await nextTurn(boardId)
+    else await nextTurn()
 }
 
-const clearContainers = async (boardId) => {
-    await updateDoc(doc(database, "cardContainer", boardId), {
+const clearContainers = async () => {
+    await updateDoc(cardContainerRef, {
         0: [],
         1: [],
         2: [],
@@ -421,9 +447,7 @@ const updateHasPlayedSetOrRun = async (playerId) => {
     })
 }
 
-const nextTurn = async (boardId) => {
-    const boardRef = doc(database, "board", boardId)
-
+const nextTurn = async () => {
     await runTransaction(database, async(transaction) => {
         const boardSnap = await transaction.get(boardRef)
 
@@ -443,9 +467,7 @@ const nextTurn = async (boardId) => {
     })
 }
 
-const boardOver = async (boardId) => {
-    const boardRef = doc(database, "board", boardId)
-
+const boardOver = async () => {
     const boardSnap = await getDoc(boardRef)
     const players = boardSnap.data().players
 
@@ -468,9 +490,7 @@ const boardOver = async (boardId) => {
     })
 }
 
-export const updateScoreboard = async (boardId) => {
-    const boardRef = doc(database, "board", boardId)
-
+export const updateScoreboard = async () => {
     const boardSnap = await getDoc(boardRef)
     const players = boardSnap.data().players
 
@@ -485,7 +505,6 @@ export const updateScoreboard = async (boardId) => {
             name: playerSnap.data().name,
             points: playerSnap.data().points,
         }
-
         scores.push(temp)
     }
     return scores

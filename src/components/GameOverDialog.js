@@ -7,11 +7,11 @@ const GameOverDialog = props => {
 
     const handleNextRound = async () => {
         handleClose()
-        await resetBoardState(props.boardId)
+        await resetBoardState()
     }
 
     const handleEndGame = async () => {
-        await deleteGame(props.boardId)
+        await deleteGame()
         handleClose()
         props.history.push('/')
     }

@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react'
-import { Button, Dialog, DialogContent, DialogTitle, Grid, Typography } from '@mui/material'
+import { Dialog, DialogContent, DialogTitle, Grid, Typography } from '@mui/material'
 import { updateScoreboard } from './firebaseUtils'
 
 const Scoreboard = props => {
     const [open, setOpen] = useState(false)
     const [scoreboard, setScoreboard] = useState([])
 
-    const getUpdatedScoreboard = async (boardId) => {
-        setScoreboard(await updateScoreboard(boardId))
+    const getUpdatedScoreboard = async () => {
+        setScoreboard(await updateScoreboard())
     }
 
     const handleClose = () => {
@@ -16,11 +16,11 @@ const Scoreboard = props => {
     }
 
     useEffect(() => {
-        props.isGameOver && getUpdatedScoreboard(props.boardId)
+        props.isGameOver && getUpdatedScoreboard()
     }, [props.isGameOver])
 
     useEffect(() => {
-        getUpdatedScoreboard(props.boardId)
+        getUpdatedScoreboard()
     }, [])
 
     useEffect(() => {
@@ -31,12 +31,14 @@ const Scoreboard = props => {
         <Dialog open={open} onClose={handleClose}>
             <DialogTitle align="center">Scoreboard</DialogTitle>
             <DialogContent>
-                {scoreboard && scoreboard.map((item, index) => (
-                    <div key={index}>
-                        <Typography>{item.name}</Typography>
-                        <Typography>{item.points}</Typography>
-                    </div>
-                ))}
+                <Grid container align="center" spacing={2}>
+                    {scoreboard && scoreboard.map((item, index) => (
+                        <Grid item xs={12} key={index}>
+                            <Typography variant="h6">{item.name} {item.player === props.playerId ? "(You)" : ""}</Typography>
+                            <Typography variant="subtitle">Points: {item.points}</Typography>
+                        </Grid>
+                    ))}
+                </Grid>
             </DialogContent>
         </Dialog>
     )

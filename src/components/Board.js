@@ -4,7 +4,7 @@ import Hand from './Player'
 import Discard from './Discard'
 import CardContainerGrid from './CardContainerGrid'
 import CardsInPlayContainerGrid from './CardsInPlayContainerGrid'
-import { deleteGame, database, initializeDeck, initializeDiscard, initializeCardContainer, initializeCardsInPlayContainer, resetBoardState, dealStartingHands } from './firebaseUtils'
+import { deleteGame, database, resetBoardState, dealStartingHands } from './firebaseUtils'
 import { doc, onSnapshot } from '@firebase/firestore'
 import GameOverDialog from './GameOverDialog'
 import Scoreboard from './Scoreboard'
@@ -20,15 +20,13 @@ const Board = props => {
     const [isGameOver, setIsGameOver] = useState(false)
     const [isScoreboardOpen, setIsScoreboardOpen] = useState(false)
 
-    const [isDeckReady, setIsDeckReady] = useState()
-    const [isDiscardReady, setIsDiscardReady] = useState()
-    const [isCardContainerReady, setIsCardContainerReady] = useState()
-    const [isCardsInPlayContainerReady, setIsCardsInPlayContainerReady] = useState()
+    // const handleDeleteGamePress = async () => {
+    //     await deleteGame()
+    // }
 
-
-    const handleDeleteGamePress = async () => {
-        await deleteGame(boardId)
-    }
+    // const handleResetBoardPress = async () => {
+    //     await resetBoardState()
+    // }
 
     const handleAreAllContainersValid = e => {
         setIsAllContainersValid(e)
@@ -40,12 +38,8 @@ const Board = props => {
 
     const handleDealStartingHands = async () => {
         if (!hasDealtStartingHands) {
-            dealStartingHands([allPlayerIds], boardId)
+            dealStartingHands([allPlayerIds])
         }
-    }
-
-    const handleResetBoardPress = async () => {
-        await resetBoardState(boardId, [allPlayerIds])
     }
 
     const handleScoreboardOpen = () => {
@@ -53,10 +47,6 @@ const Board = props => {
     }
 
     const newBoard = async () => {
-        setIsDeckReady(await initializeDeck(props.boardId))
-        setIsDiscardReady(await initializeDiscard(props.boardId)) 
-        setIsCardContainerReady(await initializeCardContainer(props.boardId))
-        setIsCardsInPlayContainerReady(await initializeCardsInPlayContainer(props.boardId))
         handleDealStartingHands()
     }
 
@@ -81,25 +71,24 @@ const Board = props => {
     return (
         <div>
             <MuiContainer style={{marginTop: '20px'}}>
-                {isCardsInPlayContainerReady && isCardContainerReady && <CardsInPlayContainerGrid boardId={boardId} isContainer0Valid={isContainer0Valid} />}
-                {isCardContainerReady && <CardContainerGrid boardId={boardId} currentPlayer={currentPlayer} playerId={playerId} areAllContainersValid={handleAreAllContainersValid} isContainer0Valid={handleIsContainer0Valid} />}
+                <CardsInPlayContainerGrid boardId={boardId} isContainer0Valid={isContainer0Valid} />
+                <CardContainerGrid boardId={boardId} currentPlayer={currentPlayer} playerId={playerId} areAllContainersValid={handleAreAllContainersValid} isContainer0Valid={handleIsContainer0Valid} />
             </MuiContainer>
             <div style={{position: 'fixed', right: 10, bottom: 0}}>
                 <Grid container direction="column">
-                    <Button variant="contained" onClick={handleResetBoardPress} color="error">Reset Board</Button>
-                    <Button variant="contained" onClick={handleDeleteGamePress} color="error">DELETE GAME</Button>
+                    {/* <Button variant="contained" onClick={handleResetBoardPress} color="error">Reset Board</Button>
+                    <Button variant="contained" onClick={handleDeleteGamePress} color="error">DELETE GAME</Button> */}
                     <Button variant="contained" onClick={handleScoreboardOpen} >Scoreboard</Button>
-                    {isDiscardReady && <Discard boardId={boardId} />}
+                    <Discard boardId={boardId} />
                 </Grid>
             </div>
             <MuiContainer>
                 <MuiContainer style={{position: 'fixed', bottom: 10}}>
-                    {playerId && boardId && isDiscardReady && isDeckReady && isCardContainerReady &&
-                        <Hand playerId={playerId} boardId={boardId} currentPlayer={currentPlayer} isAllContainersValid={isAllContainersValid}/>}
+                    <Hand playerId={playerId} boardId={boardId} currentPlayer={currentPlayer} isAllContainersValid={isAllContainersValid}/>
                 </MuiContainer>
             </MuiContainer>
             {isGameOver && <GameOverDialog isGameOver={isGameOver} boardId={boardId}/>}
-            <Scoreboard isGameOver={isGameOver} boardId={boardId} isScoreboardOpen={isScoreboardOpen} closeScoreboard={handleScoreboardOpen}/>
+            <Scoreboard isGameOver={isGameOver} boardId={boardId} playerId={playerId} isScoreboardOpen={isScoreboardOpen} closeScoreboard={handleScoreboardOpen}/>
         </div>
     )
 }

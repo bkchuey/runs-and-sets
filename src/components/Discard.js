@@ -53,12 +53,13 @@ const Discard = props => {
     }
 
     const style ={
-        // width: '165px',
-        height: '180px',
+        width: '150px',
+        height: '165px',
         backgroundColor: 'grey',
         // float:'right',
         // marginRight: '30px',
-        padding: '10px'
+        padding: '10px',
+        marginBottom: '10px',
     }
 
     useEffect(() => {
