@@ -21,42 +21,43 @@ const Hand = props => {
     const [isSnackOpen, setIsSnackOpen] = useState(false)
     const [isDialogOpen, setIsDialogOpen] = useState(false)
 
-    const handleDrawFromDeck = async () => {
-        const docRef = doc(database, "deck", boardId)
+    // const handleDrawFromDeck = async () => {
+    //     const docRef = doc(database, "deck", boardId)
 
-        await runTransaction(database, async (transaction) => {
-            const deckRef = await transaction.get(docRef)
-            const cardToDraw = deckRef.data().deck[0]
+    //     await runTransaction(database, async (transaction) => {
+    //         const deckRef = await transaction.get(docRef)
 
-            transaction.update(doc(database, "player", playerId), {
-                hand: [...items, cardToDraw],
-                hasDrawn: true,
-            })
-            transaction.update(docRef, {
-                deck: arrayRemove(cardToDraw)
-            })
-        })
-    }
+    //         const cardToDraw = deckRef.data().deck[0]
 
-    const handleDrawFromDiscard = async () => {
-        const docRef = doc(database, "discard", boardId)
+    //         transaction.update(doc(database, "player", playerId), {
+    //             hand: [...items, cardToDraw],
+    //             hasDrawn: true,
+    //         })
+    //         transaction.update(docRef, {
+    //             deck: arrayRemove(cardToDraw)
+    //         })
+    //     })
+    // }
 
-        await runTransaction(database, async (transaction) => {
-            const discardRef = await transaction.get(docRef)
-            const cardToDraw = discardRef.data().discard[discardRef.data().discard.length-1]
+    // const handleDrawFromDiscard = async () => {
+    //     const docRef = doc(database, "discard", boardId)
 
-            transaction.update(doc(database, "player", playerId), {
-                hand: [...items, cardToDraw],
-                hasDrawn: true,
-            })
-            transaction.update(docRef, {
-                discard: arrayRemove(cardToDraw)
-            })
-        })
-    }
+    //     await runTransaction(database, async (transaction) => {
+    //         const discardRef = await transaction.get(docRef)
+    //         const cardToDraw = discardRef.data().discard[discardRef.data().discard.length-1]
+
+    //         transaction.update(doc(database, "player", playerId), {
+    //             hand: [...items, cardToDraw],
+    //             hasDrawn: true,
+    //         })
+    //         transaction.update(docRef, {
+    //             discard: arrayRemove(cardToDraw)
+    //         })
+    //     })
+    // }
 
     const handleEndTurnPress = () => {
-        if (isAllContainersValid) endTurn(boardId, playerId, items)
+        if (isAllContainersValid) endTurn(playerId, items)
         else setIsSnackOpen(true)
     }
 
@@ -150,9 +151,9 @@ const Hand = props => {
 
     return (
         <div>
-            <Button variant="contained" color="error" onClick={handleDrawFromDeck}>Draw from deck</Button>
+            {/* <Button variant="contained" color="error" onClick={handleDrawFromDeck}>Draw from deck</Button>
             <Button variant="contained" color="error" onClick={handleDrawFromDiscard}>Draw from Discard</Button>
-            <Button variant="contained" color="error" onClick={handleEndTurnPress}>end turn</Button>
+            <Button variant="contained" color="error" onClick={handleEndTurnPress}>end turn</Button> */}
             {isPlayerTurn && !hasDrawn && <Button variant="contained" onClick={() => setIsDialogOpen(true)} >Draw card</Button>}
             {isPlayerTurn && <Button variant="contained" onClick={handleEndTurnPress} disabled={!(hasDrawn && (hasDiscarded || (items.length === 0 && isAllContainersValid)) && handPoints < (100 - points))} >End turn</Button>}
             <div style={divStyle}>

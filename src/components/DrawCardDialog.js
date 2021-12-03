@@ -5,15 +5,14 @@ import { drawFromDeck, drawFromDiscard } from './firebaseUtils'
 const NewTurnDialog = props => {
     const [open, setOpen] = useState(false)
     const [playerId] = useState(props.playerId)
-    const [boardId] = useState(props.boardId)
 
     const handleDrawFromDeck = async () => {
-        await drawFromDeck(boardId, playerId, props.items)
+        await drawFromDeck(playerId, props.items)
         handleClose()
     }
     
     const handleDrawFromDiscard = async () => {
-        await drawFromDiscard(boardId, playerId, props.items)
+        await drawFromDiscard(playerId, props.items)
         handleClose()
     }
 

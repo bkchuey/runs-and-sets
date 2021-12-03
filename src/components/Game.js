@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import Board from './Board'
 import { doc, onSnapshot } from '@firebase/firestore'
-import { database, initializeBoard } from './firebaseUtils'
+import { database, initializeNewBoard } from './firebaseUtils'
 
 const Game = props => {
     const [playerId] = useState(props.playerId)
@@ -10,7 +10,7 @@ const Game = props => {
     const [isBoardReady, setIsBoardReady] = useState(false)
 
     const newBoard = async (roomCode, players) => {
-        await initializeBoard(roomCode, [players])
+        await initializeNewBoard(roomCode, [players])
         setIsBoardReady(true)
     }
 
@@ -28,7 +28,6 @@ const Game = props => {
 
     return (
         <div>
-            {/* {console.log('here',allPlayerIds)} */}
             {playerId && allPlayerIds && roomCode && isBoardReady && 
             <Board playerId={playerId} allPlayerIds={allPlayerIds} boardId={roomCode} />}
         </div>
