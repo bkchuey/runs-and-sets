@@ -81,25 +81,24 @@ export const createDeck = () => {
                 suit: suit,
                 id: id++
             }
-            // let temp2 = {
-            //     value: value,
-            //     suit: suit,
-            //     id: id++
-            // }
-            // deck.push(temp, temp2)
-            deck.push(temp)
+            let temp2 = {
+                value: value,
+                suit: suit,
+                id: id++
+            }
+            deck.push(temp, temp2)
         }
     }
 
     return shuffleDeck(deck)
 }
 
- export const shuffleDeck = deck => {
-    // for (let i = deck.length - 1; i > 0; i--) {
-    //     let j = Math.floor(Math.random() * i)
-    //     let temp = deck[i]
-    //     deck[i] = deck[j]
-    //     deck[j] = temp
-    // }
+export const shuffleDeck = deck => {
+    for (let i = deck.length - 1; i > 0; i--) {
+        let j = Math.floor(Math.random() * i)
+        let temp = deck[i]
+        deck[i] = deck[j]
+        deck[j] = temp
+    }
     return deck
 }
