@@ -24,7 +24,7 @@ const DraggableCard = props => {
     const style = {
         height: '165px',
         width: '150px',
-        // marginLeft: '-50px',
+        marginRight: '-13px',
         backgroundColor: '#ecf0f1',
         color: cardInfo.suit === 'Diamonds' || cardInfo.suit === 'Hearts' ? 'red' : 'black',
     }

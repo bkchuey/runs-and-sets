@@ -12,15 +12,16 @@ const CardContainerGrid = props => {
     const [boardId] = useState(props.boardId)
     const [isAddButtonDisabled, setIsAddButtonDisabled] = useState(false)
     const [isRemoveButtonDisabled, setIsRemoveButtonDisabled] = useState(false)
+    const cardContainerRef = doc(database, "cardContainer", boardId)
 
     const handleAddContainerPress = async () => {
-        await updateDoc(doc(database, "cardContainer", boardId), {
+        await updateDoc(cardContainerRef, {
             containers: arrayUnion(containers.length),
         })
     }
 
     const handleRemoveContainerPress = async () => {
-        await updateDoc(doc(database, "cardContainer", boardId), {
+        await updateDoc(cardContainerRef, {
             containers: arrayRemove(containers.length - 1)
         })
         setAllContainersValidity(prevState => [
