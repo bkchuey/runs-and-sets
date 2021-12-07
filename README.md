@@ -1,6 +1,6 @@
 # runs-and-sets
 
-A modified version of Gin Rummy.
+Runs and Sets is an online, 2 player modified version of Gin Rummy.
 
 [Play it here!](https://runs-and-sets.web.app/)
 
